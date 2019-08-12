@@ -21,10 +21,10 @@ FusionEKF::FusionEKF() {
   R_radar_ = MatrixXd(3, 3); // Radar Measurement Covariance Matrix
   H_laser_ = MatrixXd(2, 4); // Laser Measurement Function
   Hj_ = MatrixXd(3, 4); // Linearized Radar Measurement Function
-  x_ = VectorXd(4); // State Vector (px, py, vx, vy)
-  P_ = MatrixXd(4, 4); // Process Covariance Matrix
-  F_ = MatrixXd(4, 4); // State Transition Function 
-  Q_ = MatrixXd(4, 4); // Process Noise
+  ekf_.x_ = VectorXd(4); // State Vector (px, py, vx, vy)
+  ekf_.P_ = MatrixXd(4, 4); // Process Covariance Matrix
+  ekf_.F_ = MatrixXd(4, 4); // State Transition Function 
+  ekf_.Q_ = MatrixXd(4, 4); // Process Noise
 
   //measurement covariance matrix - laser
   R_laser_ << 0.0225, 0,
@@ -36,14 +36,14 @@ FusionEKF::FusionEKF() {
               0, 0, 0.09;
 
   // Set State Transition Matrix
-  F_ << 1, 0, 0, 0,
+  ekf_.F_ << 1, 0, 0, 0,
 	  0, 1, 0, 0,
 	  0, 0, 1, 0,
 	  0, 0, 0, 1;
 
   // Set initial State Covariance Matrix (low for position, high for velocities)
   // WORK Tuning?
-  P_ << 1, 0, 0, 0,
+  ekf_.P_ << 1, 0, 0, 0,
 	  0, 1, 0, 0,
 	  0, 0, 1000, 0,
 	  0, 0, 0, 1000;
@@ -59,8 +59,10 @@ FusionEKF::FusionEKF() {
 	  0, 1, 0, 0;
 
   //Hj_ = CalculateJacobian(const VectorXd & x_);
-
-  ekf_ = KalmanFilter::KalmanFilter(x_, P_, F_, H_, R_, Q_);
+  //x_ << 0, 1.2, 0, 0;
+  //H_ << MatrixXd(2,4) ;
+  //H_ = H_laser_;
+  //ekf_.Init(x_, P_, F_, H_, R_, Q_);
 }
   /**
 
@@ -69,7 +71,6 @@ FusionEKF::FusionEKF() {
    */
 
 
-}
 
 /**
  * Destructor.
@@ -81,16 +82,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Initialization
    */
   if (!is_initialized_) {
-	  ekf_.x = VectorXd(4);
+	  ekf_.x_ = VectorXd(4);
 	  //LIDAR
 	  if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
 		  cout << "Initializing with Lidar Measurement" << endl;
 		  ekf_.x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
 	  }
 	  //RADAR
-	  else if(measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+	  else {
 		  cout << "Initializing with Radar Measurement" << endl;
-		  ekf_.x_ << measurement_pack.raw_measurements_[0] * cos(measurement_pack.raw_measurements_[1] << measurement_pack.raw_measurements_[0] * sin(measurement_pack.raw_measurements_[1]) << 0 << 0;
+		  ekf_.x_ << measurement_pack.raw_measurements_[0] * cos(measurement_pack.raw_measurements_[1]), measurement_pack.raw_measurements_[0] * sin(measurement_pack.raw_measurements_[1]), 0, 0;
 	  }
 
     // done initializing, no need to predict or update
@@ -109,21 +110,21 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
    // Modify the F matrix so that the time is integrated
-  dt = previous_timestamp_ - measurement_pack.timestamp_;
-  F_(0, 2) = dt;
-  F_(1, 3) = dt;
-
-  // TODO: YOUR CODE HERE
+  long long dt = previous_timestamp_ - measurement_pack.timestamp_;
+  previous_timestamp_ = measurement_pack.timestamp_; 
+  ekf_.F_(0, 2) = dt;
+  ekf_.F_(1, 3) = dt;
+  
+// TODO: YOUR CODE HERE
   float dt_2 = dt * dt;
   float dt_3 = dt_2 * dt;
   float dt_4 = dt_3 * dt;
 
   // set the process covariance matrix Q
-  Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
+  ekf_.Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
 	  0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
 	  dt_3 / 2 * noise_ax, 0, dt_2 * noise_ax, 0,
 	  0, dt_3 / 2 * noise_ay, 0, dt_2 * noise_ay;
-
   ekf_.Predict();
 
   /**
@@ -135,14 +136,19 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * - Use the sensor type to perform the update step.
    * - Update the state and covariance matrices.
    */
-
+  
+  VectorXd z = measurement_pack.raw_measurements_; 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
-	  ekf_.UpdateEKF();
+	  cout << "Receiving Radar update:" << endl; 
+          cout << "Measurement: " << z << endl;
+          ekf_.UpdateEKF(z);
   } else {
-	  H_ = H_laser_;
-	  R_ = R_laser ;
-	  ekf_.Update();
+          cout << "Receiving Lidar update:" << endl;
+	  cout << "Measurement: " << z << endl;
+          ekf_.H_ = H_laser_;
+	  ekf_.R_ = R_laser_ ;
+	  ekf_.Update(z);
 
   }
 
