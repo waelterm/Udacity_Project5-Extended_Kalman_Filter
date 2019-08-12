@@ -49,11 +49,10 @@ FusionEKF::FusionEKF() {
 	  0, 0, 0, 1000;
 
   // WORK Tuning?
-  double noise_ax = 5;
-  double noise_ay = 5;
+  noise_ax = 9;
+  noise_ay = 9;
 
   // Loading tools:
-  Tools tools;
 
   H_laser_ << 1, 0, 0, 0,
 	  0, 1, 0, 0;
@@ -93,7 +92,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 		  cout << "Initializing with Radar Measurement" << endl;
 		  ekf_.x_ << measurement_pack.raw_measurements_[0] * cos(measurement_pack.raw_measurements_[1]), measurement_pack.raw_measurements_[0] * sin(measurement_pack.raw_measurements_[1]), 0, 0;
 	  }
-
+          previous_timestamp_ = measurement_pack.timestamp_; 
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -110,21 +109,23 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
    // Modify the F matrix so that the time is integrated
-  long long dt = previous_timestamp_ - measurement_pack.timestamp_;
-  previous_timestamp_ = measurement_pack.timestamp_; 
+  long long dt = measurement_pack.timestamp_ - previous_timestamp_;
+  cout << "dt: " << dt << endl;
   ekf_.F_(0, 2) = dt;
+  previous_timestamp_ = measurement_pack.timestamp_; 
   ekf_.F_(1, 3) = dt;
   
 // TODO: YOUR CODE HERE
   float dt_2 = dt * dt;
   float dt_3 = dt_2 * dt;
   float dt_4 = dt_3 * dt;
-
+  cout << "Noise ax, ay: " << noise_ax << noise_ay << endl;
   // set the process covariance matrix Q
   ekf_.Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
 	  0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
 	  dt_3 / 2 * noise_ax, 0, dt_2 * noise_ax, 0,
 	  0, dt_3 / 2 * noise_ay, 0, dt_2 * noise_ay;
+  cout << "Q_: " << ekf_.Q_ << endl;
   ekf_.Predict();
 
   /**
@@ -137,6 +138,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * - Update the state and covariance matrices.
    */
   
+  cout << "P_3 = " << ekf_.P_ << endl;
   VectorXd z = measurement_pack.raw_measurements_; 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
