@@ -13,10 +13,10 @@ Tools::~Tools() {}
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
 	// GOAL: .11,.11,.0.52,0.52
+	// With Lidar: 0.2249, 0.2186, 3.7413, 3.3195
 	// From Lesson 23 #24
 	VectorXd rmse(4);
 	rmse << 0, 0, 0, 0;
-
 	// check the validity of the following inputs:
 	//  * the estimation vector size should not be zero
 	//  * the estimation vector size should equal ground truth vector size
