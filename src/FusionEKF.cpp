@@ -144,6 +144,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
 	  cout << "Receiving Radar update:" << endl; 
           cout << "Measurement: " << z << endl;
+		  ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
+		  ekf_.R_ = R_radar_;
           ekf_.UpdateEKF(z);
   } else {
           cout << "Receiving Lidar update:" << endl;
