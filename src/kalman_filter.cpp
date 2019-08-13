@@ -46,23 +46,23 @@ void KalmanFilter::Update(const VectorXd &z) {
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-	z_pred = VectorXd(3); 
+	VectorXd z_pred = VectorXd(3); 
 	double p_x = x_(0);
 	double p_y = x_(1);
-	double v1 = x_(2);
-	double v2 = x_(3);
+	double v_x = x_(2);
+	double v_y = x_(3);
 	double p_x2 = p_x * p_x;
 	double p_y2 = p_y * p_y;
 	double rho = sqrt(p_x2 + p_y2);
-	double phi = atan2(py,px);
-	double rho_dot = (px * vx + py * vy)/rho;
+	double phi = atan2(p_y,p_x);
+	double rho_dot = (p_x * v_x + p_y * v_y)/rho;
 	z_pred << rho, phi, rho_dot;
 	VectorXd y = z - z_pred;
-	while (y(2) > M_PI) {
-		y(2) -= 2 * M_PI;
+	while (y(1) > M_PI) {
+		y(1) -= 2 * M_PI;
 	}
-	while (y(2) < -M_PI) {
-		y(2) += 2 * M_PI;
+	while (y(1) < -M_PI) {
+		y(1) += 2 * M_PI;
 	}
 	MatrixXd Ht = H_.transpose();
 	MatrixXd S = H_ * P_ * Ht + R_;

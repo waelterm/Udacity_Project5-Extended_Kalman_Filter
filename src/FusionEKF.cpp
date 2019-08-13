@@ -14,6 +14,7 @@ using std::vector;
  */
 FusionEKF::FusionEKF() {
   is_initialized_ = false;
+  cnt_ = 0;
   previous_timestamp_ = 0;
 
   // initializing matrices
@@ -80,6 +81,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   /**
    * Initialization
    */
+  //++cnt_;
+  if (cnt_ >5){
+    return;
+  } 
   if (!is_initialized_) {
 	  ekf_.x_ = VectorXd(4);
 	  //LIDAR
@@ -109,7 +114,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
    // Modify the F matrix so that the time is integrated
-  long long dt = measurement_pack.timestamp_ - previous_timestamp_;
+  double dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
   cout << "dt: " << dt << endl;
   ekf_.F_(0, 2) = dt;
   previous_timestamp_ = measurement_pack.timestamp_; 
@@ -119,7 +124,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   float dt_2 = dt * dt;
   float dt_3 = dt_2 * dt;
   float dt_4 = dt_3 * dt;
-  cout << "Noise ax, ay: " << noise_ax << noise_ay << endl;
+  //  cout << "Noise ax, ay: " << noise_ax << noise_ay << endl;
   // set the process covariance matrix Q
   ekf_.Q_ << dt_4 / 4 * noise_ax, 0, dt_3 / 2 * noise_ax, 0,
 	  0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
@@ -127,7 +132,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 	  0, dt_3 / 2 * noise_ay, 0, dt_2 * noise_ay;
   cout << "Q_: " << ekf_.Q_ << endl;
   ekf_.Predict();
-
+  cout << "Predict:" << endl;
+  cout << "P_ = " << ekf_.P_ << endl;
+  cout << "x_ = " << ekf_.x_ << endl;
+  cout << endl;
   /**
    * Update
    */
@@ -158,5 +166,5 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   // print the output
   cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+  cout << "P_ = " << ekf_.P_ << endl << endl;
 }

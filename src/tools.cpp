@@ -14,6 +14,10 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
 	// GOAL: .11,.11,.0.52,0.52
 	// With Lidar: 0.2249, 0.2186, 3.7413, 3.3195
+	// With Radar:
+		// Dataset 1: 0.0973, 0.0855, 0.4513, 0.4399
+  		// Dataset 2: 0.0726, 0.0967, 0.4579, 0.4966
+
 	// From Lesson 23 #24
 	VectorXd rmse(4);
 	rmse << 0, 0, 0, 0;
