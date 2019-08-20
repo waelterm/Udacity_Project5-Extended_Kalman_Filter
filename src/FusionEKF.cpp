@@ -56,7 +56,7 @@ FusionEKF::FusionEKF() {
 	H_laser_ << 1, 0, 0, 0,
 		0, 1, 0, 0;
 
-
+}
 
 
 	// Destructor.
@@ -72,12 +72,12 @@ FusionEKF::FusionEKF() {
 			ekf_.x_ = VectorXd(4);
 			//LIDAR
 			if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-				cout << "Initializing with Lidar Measurement" << endl;
+				//cout << "Initializing with Lidar Measurement" << endl;
 				ekf_.x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
 			}
 			//RADAR
 			else {
-				cout << "Initializing with Radar Measurement" << endl;
+				//cout << "Initializing with Radar Measurement" << endl;
 				ekf_.x_ << measurement_pack.raw_measurements_[0] * cos(measurement_pack.raw_measurements_[1]), measurement_pack.raw_measurements_[0] * sin(measurement_pack.raw_measurements_[1]), 0, 0;
 			}
 			previous_timestamp_ = measurement_pack.timestamp_;
@@ -89,7 +89,7 @@ FusionEKF::FusionEKF() {
 
 		// Modify the F matrix so that the time is integrated
 		double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
-		cout << "dt: " << dt << endl;
+		//cout << "dt: " << dt << endl;
 		ekf_.F_(0, 2) = dt;
 		previous_timestamp_ = measurement_pack.timestamp_;
 		ekf_.F_(1, 3) = dt;
@@ -104,12 +104,12 @@ FusionEKF::FusionEKF() {
 			0, dt_4 / 4 * noise_ay, 0, dt_3 / 2 * noise_ay,
 			dt_3 / 2 * noise_ax, 0, dt_2 * noise_ax, 0,
 			0, dt_3 / 2 * noise_ay, 0, dt_2 * noise_ay;
-		cout << "Q_: " << ekf_.Q_ << endl;
+		//cout << "Q_: " << ekf_.Q_ << endl;
 		ekf_.Predict();
-		cout << "Predict:" << endl;
-		cout << "P_ = " << ekf_.P_ << endl;
-		cout << "x_ = " << ekf_.x_ << endl;
-		cout << endl;
+		//cout << "Predict:" << endl;
+		//cout << "P_ = " << ekf_.P_ << endl;
+		//cout << "x_ = " << ekf_.x_ << endl;
+		//cout << endl;
 
 		//cout << "P_3 = " << ekf_.P_ << endl;
 		VectorXd z = measurement_pack.raw_measurements_;
@@ -133,6 +133,6 @@ FusionEKF::FusionEKF() {
 		}
 
 		// print the output
-		cout << "x_ = " << ekf_.x_ << endl;
-		cout << "P_ = " << ekf_.P_ << endl << endl;
+		//cout << "x_ = " << ekf_.x_ << endl;
+		//cout << "P_ = " << ekf_.P_ << endl << endl;
 	}
